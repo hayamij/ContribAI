@@ -221,6 +221,9 @@ class CodeAnalyzer:
             "code_quality": self._code_quality_prompt,
             "docs": self._docs_prompt,
             "ui_ux": self._ui_ux_prompt,
+            "performance": self._performance_prompt,
+            "refactor": self._refactor_prompt,
+            "testing": self._testing_prompt,
         }
 
         prompt_fn = prompts.get(name)
@@ -325,6 +328,70 @@ class CodeAnalyzer:
             "If no frontend code found, return 'findings: []'.\n"
         )
 
+    def _performance_prompt(self, ctx: RepoContext) -> str:
+        files_text = self._format_files(ctx)
+        return (
+            f"Analyze this {ctx.repo.language} repository for PERFORMANCE issues:\n\n"
+            f"Repository: {ctx.repo.full_name}\n\n"
+            f"{files_text}\n\n"
+            "Look for:\n"
+            "1. N+1 query patterns (database calls inside loops)\n"
+            "2. Missing caching for expensive operations\n"
+            "3. Unnecessary synchronous I/O blocking the event loop\n"
+            "4. Inefficient data structures (list for lookups instead of set/dict)\n"
+            "5. Unnecessary re-renders in React/Vue components\n"
+            "6. Missing pagination for large data fetches\n"
+            "7. Unoptimized regex or string operations in hot paths\n"
+            "8. Memory leaks (unclosed resources, growing caches without eviction)\n"
+            "9. Redundant API calls or duplicate network requests\n"
+            "10. Missing lazy loading for heavy imports or large assets\n\n"
+            "Focus on issues that have measurable performance impact. "
+            "Avoid micro-optimizations that don't matter in practice.\n"
+        )
+
+    def _refactor_prompt(self, ctx: RepoContext) -> str:
+        files_text = self._format_files(ctx)
+        return (
+            f"Analyze this {ctx.repo.language} repository for REFACTORING opportunities:\n\n"
+            f"Repository: {ctx.repo.full_name}\n\n"
+            f"{files_text}\n\n"
+            "Look for:\n"
+            "1. Functions/methods that are too long (>50 lines) and should be split\n"
+            "2. DRY violations (duplicated logic across multiple files)\n"
+            "3. God classes/modules that do too many things\n"
+            "4. Deeply nested conditionals (>3 levels) that need extraction\n"
+            "5. Inappropriate use of inheritance vs composition\n"
+            "6. Magic numbers/strings that should be named constants\n"
+            "7. Complex boolean expressions that need helper methods\n"
+            "8. Mixed abstraction levels within a single function\n"
+            "9. Feature envy (methods that use other class's data more than their own)\n"
+            "10. Dead code or unused imports/variables\n\n"
+            "Focus on refactorings that improve readability and maintainability. "
+            "Each finding should be a single, self-contained refactoring.\n"
+        )
+
+    def _testing_prompt(self, ctx: RepoContext) -> str:
+        files_text = self._format_files(ctx)
+        return (
+            f"Analyze this {ctx.repo.language} repository for TESTING gaps:\n\n"
+            f"Repository: {ctx.repo.full_name}\n\n"
+            f"{files_text}\n\n"
+            "Look for:\n"
+            "1. Public functions/methods with NO unit tests\n"
+            "2. Critical business logic without test coverage\n"
+            "3. Edge cases not covered by existing tests\n"
+            "4. Error handling paths without tests\n"
+            "5. Missing integration tests for API endpoints\n"
+            "6. Untested configuration validation\n"
+            "7. Missing tests for data transformations/serialization\n"
+            "8. Race conditions or concurrency that needs testing\n\n"
+            "For each finding, suggest a specific test that should be written. "
+            "Focus on the most impactful missing tests — those covering critical "
+            "code paths or frequently modified code.\n"
+            "NOTE: If the repo has no test directory/framework at all, suggest "
+            "setting up a test framework as one finding and specific tests as others.\n"
+        )
+
     def _format_files(self, ctx: RepoContext) -> str:
         """Format relevant files for the prompt."""
         parts = []
@@ -344,6 +411,9 @@ class CodeAnalyzer:
             "code_quality": ContributionType.CODE_QUALITY,
             "docs": ContributionType.DOCS_IMPROVE,
             "ui_ux": ContributionType.UI_UX_FIX,
+            "performance": ContributionType.PERFORMANCE_OPT,
+            "refactor": ContributionType.REFACTOR,
+            "testing": ContributionType.CODE_QUALITY,
         }
         contrib_type = type_map.get(analyzer_name, ContributionType.CODE_QUALITY)
 
