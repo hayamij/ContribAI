@@ -353,7 +353,7 @@ def _fill_pr_template(
             f"### Problem\n{finding.description}\n\n"
             f"**Severity**: `{finding.severity.value}`\n"
             f"**File**: `{finding.file_path}`\n\n"
-            f"### Solution\n{contribution.description}\n\n"
+            f"### Solution\n{finding.suggestion or contribution.description}\n\n"
             f"### Changes\n{files_list}\n\n"
         )
         filled = summary + filled
@@ -378,7 +378,7 @@ def _default_pr_body(
         f"### Problem\n{finding.description}\n\n"
         f"**Severity**: `{finding.severity.value}`\n"
         f"**File**: `{finding.file_path}`\n\n"
-        f"### Solution\n{contribution.description}\n\n"
+        f"### Solution\n{finding.suggestion or contribution.description}\n\n"
         f"### Changes\n{files_list}\n\n"
         f"### Testing\n"
         f"- [x] Existing tests pass\n"

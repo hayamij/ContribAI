@@ -179,7 +179,7 @@ class PRManager:
 **File**: `{finding.file_path}`
 
 ### Solution
-{contribution.description}
+{finding.suggestion or contribution.description}
 
 ### Changes
 {files_list}

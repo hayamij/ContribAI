@@ -298,6 +298,67 @@ class GitHubClient:
 
     # ── Helpers ────────────────────────────────────────────────────────────
 
+    # ── CI / Check Runs ────────────────────────────────────────────────────
+
+    async def get_combined_status(self, owner: str, repo: str, ref: str) -> dict:
+        """Get combined CI status for a commit ref.
+
+        Returns dict with 'state' (success/failure/pending) and 'statuses'.
+        Also fetches check runs for GitHub Actions.
+        """
+        # Get check suites/runs (GitHub Actions)
+        try:
+            checks = await self._get(
+                f"/repos/{owner}/{repo}/commits/{ref}/check-runs",
+                params={"per_page": 100},
+            )
+        except Exception:
+            checks = {"check_runs": []}
+
+        runs = checks.get("check_runs", [])
+        if not runs:
+            return {"state": "pending", "total": 0, "failed": [], "passed": []}
+
+        failed = [r["name"] for r in runs if r.get("conclusion") == "failure"]
+        passed = [r["name"] for r in runs if r.get("conclusion") == "success"]
+        in_progress = [r["name"] for r in runs if r.get("status") in ("queued", "in_progress")]
+
+        if in_progress:
+            state = "pending"
+        elif failed:
+            state = "failure"
+        else:
+            state = "success"
+
+        return {
+            "state": state,
+            "total": len(runs),
+            "failed": failed,
+            "passed": passed,
+            "in_progress": in_progress,
+        }
+
+    async def close_pull_request(
+        self,
+        owner: str,
+        repo: str,
+        pr_number: int,
+        *,
+        comment: str | None = None,
+    ) -> None:
+        """Close a PR with an optional comment explaining why."""
+        if comment:
+            await self._post(
+                f"/repos/{owner}/{repo}/issues/{pr_number}/comments",
+                json={"body": comment},
+            )
+        await self._request(
+            "PATCH",
+            f"/repos/{owner}/{repo}/pulls/{pr_number}",
+            json={"state": "closed"},
+        )
+        logger.info("Closed PR #%d on %s/%s", pr_number, owner, repo)
+
     @staticmethod
     def _parse_repo(data: dict) -> Repository:
         """Parse raw API response into Repository model."""

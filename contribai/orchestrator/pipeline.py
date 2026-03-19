@@ -366,6 +366,12 @@ class ContribPipeline:
                     )
                 except Exception as e:
                     logger.warning("Compliance check failed: %s", e)
+
+                # 6. Wait for CI and auto-close if tests fail
+                try:
+                    await self._check_ci_and_close_if_failed(pr_result, repo)
+                except Exception as e:
+                    logger.warning("CI check failed: %s", e)
             except Exception as e:
                 error = f"PR creation failed for {finding.title}: {e}"
                 logger.error(error)
@@ -373,6 +379,95 @@ class ContribPipeline:
 
         result.repos_analyzed = 1
         return result
+
+    async def _check_ci_and_close_if_failed(
+        self,
+        pr_result: PRResult,
+        repo: Repository,
+        *,
+        max_wait_sec: int = 90,
+        poll_interval: int = 15,
+    ) -> None:
+        """Wait for CI checks and auto-close the PR if they fail.
+
+        Polls the PR's head commit for check run results. If required
+        checks fail (e.g. lint, typecheck, unit tests), closes the PR
+        with a comment explaining which checks failed.
+        """
+        import asyncio
+
+        branch = pr_result.branch_name
+        fork_parts = pr_result.fork_full_name.split("/")
+        fork_owner = fork_parts[0]
+        fork_name = fork_parts[1] if len(fork_parts) > 1 else repo.name
+
+        # Get the head SHA of the PR branch
+        try:
+            branch_data = await self._github._get(
+                f"/repos/{fork_owner}/{fork_name}/git/ref/heads/{branch}"
+            )
+            head_sha = branch_data["object"]["sha"]
+        except Exception:
+            logger.debug("Could not get head SHA for CI check, skipping")
+            return
+
+        logger.info("⏳ Waiting for CI checks on PR #%d...", pr_result.pr_number)
+
+        elapsed = 0
+        while elapsed < max_wait_sec:
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+
+            status = await self._github.get_combined_status(repo.owner, repo.name, head_sha)
+
+            if status["state"] == "pending":
+                logger.debug(
+                    "CI still running (%ds/%ds): %s",
+                    elapsed,
+                    max_wait_sec,
+                    ", ".join(status.get("in_progress", [])),
+                )
+                continue
+
+            if status["state"] == "success":
+                logger.info(
+                    "✅ CI passed for PR #%d (%d checks)",
+                    pr_result.pr_number,
+                    status["total"],
+                )
+                return
+
+            if status["state"] == "failure":
+                failed_names = ", ".join(status["failed"])
+                logger.warning(
+                    "❌ CI failed for PR #%d: %s",
+                    pr_result.pr_number,
+                    failed_names,
+                )
+
+                # Auto-close with comment
+                comment = (
+                    "## ❌ Auto-closed: CI checks failed\n\n"
+                    f"The following checks failed: **{failed_names}**\n\n"
+                    "This PR was automatically closed because required CI "
+                    "checks did not pass. Apologies for the inconvenience.\n\n"
+                    "---\n"
+                    "*🤖 ContribAI - automated quality gate*"
+                )
+                await self._github.close_pull_request(
+                    repo.owner,
+                    repo.name,
+                    pr_result.pr_number,
+                    comment=comment,
+                )
+                return
+
+        # Timeout — log but don't close (CI may still be running)
+        logger.info(
+            "⏰ CI check timed out after %ds for PR #%d, leaving open",
+            max_wait_sec,
+            pr_result.pr_number,
+        )
 
     def _set_task(self, task_name: str) -> None:
         """Set the current task context for multi-model routing."""
