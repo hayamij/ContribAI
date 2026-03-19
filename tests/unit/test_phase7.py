@@ -285,4 +285,4 @@ class TestVersion:
     def test_version(self):
         from contribai import __version__
 
-        assert __version__ == "0.9.0"
+        assert __version__ == "0.10.0"

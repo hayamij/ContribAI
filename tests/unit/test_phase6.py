@@ -232,4 +232,4 @@ class TestWebVersion:
     def test_health_version(self):
         from contribai.web.server import app
 
-        assert app.version == "0.9.0"
+        assert app.version == "0.10.0"
