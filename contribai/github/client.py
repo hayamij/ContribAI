@@ -41,30 +41,57 @@ class GitHubClient:
 
     # ── Core HTTP ──────────────────────────────────────────────────────────
 
-    async def _request(self, method: str, url: str, **kwargs) -> Any:
-        """Make an authenticated GitHub API request with error handling."""
-        try:
-            response = await self._client.request(method, url, **kwargs)
-        except httpx.HTTPError as e:
-            raise GitHubAPIError(f"HTTP error: {e}") from e
+    async def _request(self, method: str, url: str, *, _retries: int = 3, **kwargs) -> Any:
+        """Make an authenticated GitHub API request with error handling and retry."""
+        import asyncio
 
-        if response.status_code == 403:
-            remaining = response.headers.get("x-ratelimit-remaining", "?")
-            reset = response.headers.get("x-ratelimit-reset")
-            if remaining == "0":
-                raise RateLimitError(reset_at=int(reset) if reset else None)
-            raise GitHubAPIError(f"Forbidden: {response.text}", status_code=403)
+        last_error = None
+        for attempt in range(1, _retries + 1):
+            try:
+                response = await self._client.request(method, url, **kwargs)
+            except httpx.HTTPError as e:
+                raise GitHubAPIError(f"HTTP error: {e}") from e
 
-        if response.status_code == 404:
-            raise GitHubAPIError(f"Not found: {url}", status_code=404)
+            if response.status_code == 403:
+                remaining = response.headers.get("x-ratelimit-remaining", "?")
+                reset = response.headers.get("x-ratelimit-reset")
+                if remaining == "0":
+                    raise RateLimitError(reset_at=int(reset) if reset else None)
+                raise GitHubAPIError(f"Forbidden: {response.text}", status_code=403)
 
-        if response.status_code >= 400:
-            raise GitHubAPIError(
-                f"GitHub API error {response.status_code}: {response.text}",
-                status_code=response.status_code,
-            )
+            if response.status_code == 404:
+                raise GitHubAPIError(f"Not found: {url}", status_code=404)
 
-        return response.json() if response.content else None
+            # Retry on 5xx server errors (502, 503, 504)
+            if response.status_code >= 500:
+                last_error = GitHubAPIError(
+                    f"GitHub API error {response.status_code}: {response.text}",
+                    status_code=response.status_code,
+                )
+                if attempt < _retries:
+                    wait = 2**attempt  # 2s, 4s, 8s
+                    logger.warning(
+                        "GitHub %d error on %s %s, retrying in %ds (attempt %d/%d)",
+                        response.status_code,
+                        method,
+                        url,
+                        wait,
+                        attempt,
+                        _retries,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                raise last_error
+
+            if response.status_code >= 400:
+                raise GitHubAPIError(
+                    f"GitHub API error {response.status_code}: {response.text}",
+                    status_code=response.status_code,
+                )
+
+            return response.json() if response.content else None
+
+        raise last_error  # should never reach here
 
     async def _get(self, url: str, **kwargs) -> Any:
         return await self._request("GET", url, **kwargs)
