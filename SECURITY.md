@@ -13,8 +13,8 @@
 
 If you discover a security vulnerability, please report it responsibly:
 
-1. **DO NOT** create a public GitHub issue for security vulnerabilities
-2. Email: **security@contribai.dev** (or use [GitHub Security Advisories](https://github.com/tang-vu/ContribAI/security/advisories))
+1. **Create a [GitHub Issue](https://github.com/tang-vu/ContribAI/issues/new)** with the `security` label
+2. For critical vulnerabilities, use [GitHub Security Advisories](https://github.com/tang-vu/ContribAI/security/advisories) instead
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
