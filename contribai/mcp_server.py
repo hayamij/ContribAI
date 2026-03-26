@@ -347,10 +347,10 @@ async def _get_file_tree(args: dict) -> list[types.TextContent]:
 
 async def _get_file_content(args: dict) -> list[types.TextContent]:
     gh = await get_github()
-    content = await gh.get_file_content(
+    content, sha = await gh.get_file_content_with_sha(
         args["owner"], args["repo"], args["path"], ref=args.get("ref")
     )
-    return _ok(content=content)
+    return _ok(content=content, sha=sha)
 
 
 async def _get_open_issues(args: dict) -> list[types.TextContent]:

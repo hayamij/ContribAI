@@ -47,27 +47,32 @@ class TestSearchRepos:
 
 class TestGetFileContent:
     @pytest.mark.asyncio
-    async def test_returns_content(self):
+    async def test_returns_content_and_sha(self):
         from contribai.mcp_server import _get_file_content
         with patch("contribai.mcp_server.get_github") as mock_get_gh:
             gh = AsyncMock()
-            gh.get_file_content = AsyncMock(return_value="print('hello')")
+            gh.get_file_content_with_sha = AsyncMock(
+                return_value=("print('hello')", "abc123sha")
+            )
             mock_get_gh.return_value = gh
             result = await _get_file_content({"owner": "o", "repo": "r", "path": "main.py"})
         data = _text(result)
         assert data["content"] == "print('hello')"
+        assert data["sha"] == "abc123sha"
 
     @pytest.mark.asyncio
     async def test_passes_ref_param(self):
         from contribai.mcp_server import _get_file_content
         with patch("contribai.mcp_server.get_github") as mock_get_gh:
             gh = AsyncMock()
-            gh.get_file_content = AsyncMock(return_value="x = 1")
+            gh.get_file_content_with_sha = AsyncMock(return_value=("x = 1", "def456sha"))
             mock_get_gh.return_value = gh
             await _get_file_content(
                 {"owner": "o", "repo": "r", "path": "f.py", "ref": "fix-branch"}
             )
-            gh.get_file_content.assert_called_once_with("o", "r", "f.py", ref="fix-branch")
+            gh.get_file_content_with_sha.assert_called_once_with(
+                "o", "r", "f.py", ref="fix-branch"
+            )
 
 
 class TestGetFileTree:

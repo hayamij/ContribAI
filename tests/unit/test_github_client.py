@@ -117,6 +117,31 @@ class TestGetFileContentRef:
         assert result == "world"
 
 
+class TestGetFileContentWithSha:
+    @pytest.mark.asyncio
+    async def test_returns_content_and_sha(self, client):
+        """get_file_content_with_sha returns (content, sha) tuple."""
+        content_b64 = base64.b64encode(b"hello world").decode()
+        with respx.mock:
+            respx.get(
+                "https://api.github.com/repos/owner/repo/contents/file.py",
+            ).mock(
+                return_value=httpx.Response(
+                    200,
+                    json={
+                        "encoding": "base64",
+                        "content": content_b64,
+                        "sha": "abc123def456",
+                    },
+                )
+            )
+            content, sha = await client.get_file_content_with_sha(
+                "owner", "repo", "file.py"
+            )
+        assert content == "hello world"
+        assert sha == "abc123def456"
+
+
 class TestListUserForks:
     @pytest.mark.asyncio
     async def test_returns_fork_list(self, client):

@@ -181,6 +181,22 @@ class GitHubClient:
             return base64.b64decode(data["content"]).decode("utf-8")
         return data.get("content", "")
 
+    async def get_file_content_with_sha(
+        self, owner: str, repo: str, path: str, ref: str | None = None
+    ) -> tuple[str, str]:
+        """Get file content and blob SHA (needed for subsequent updates).
+
+        Returns:
+            (content, sha) where sha is the blob SHA required by push_file_change.
+        """
+        params = {"ref": ref} if ref else None
+        data = await self._get(f"/repos/{owner}/{repo}/contents/{path}", params=params)
+        if data.get("encoding") == "base64":
+            content = base64.b64decode(data["content"]).decode("utf-8")
+        else:
+            content = data.get("content", "")
+        return content, data.get("sha", "")
+
     async def get_open_issues(
         self, owner: str, repo: str, per_page: int = 30, labels: str | None = None
     ) -> list[Issue]:
