@@ -14,7 +14,7 @@
 <!-- List the key changes made -->
 
 ## Architecture Area
-<!-- Which v2.4.0 component does this touch? -->
+<!-- Which v2.5.0 component does this touch? -->
 - [ ] Middleware chain (`core/middleware.py`)
 - [ ] Analysis / Skills (`analysis/analyzer.py`, `analysis/skills.py`)
 - [ ] Sub-agents (`agents/registry.py`)
@@ -24,18 +24,17 @@
 - [ ] Pipeline (`orchestrator/pipeline.py`)
 - [ ] Other: <!-- specify -->
 
-## Testing
-- [ ] Tests added/updated
-- [ ] All 247 tests pass locally (`pytest tests/ -v`)
-- [ ] Lint passes (`ruff check contribai/`)
+## Pre-submit Checklist
 
-## Checklist
+> **⚠️ CI will auto-run on your PR. Please verify locally before pushing.**
+
+- [ ] `ruff check contribai/` passes (lint)
+- [ ] `ruff format --check contribai/ tests/` passes (format)
+- [ ] `pytest tests/ -v` passes (356+ tests)
 - [ ] Code follows project conventions (async, type hints, Google docstrings)
 - [ ] `from __future__ import annotations` at top of new files
 - [ ] No hardcoded secrets
 - [ ] DCO signoff on all commits (`git commit -s`)
-- [ ] CHANGELOG.md updated (if user-facing)
-- [ ] AGENTS.md updated (if architecture changed)
 
 ## Related Issues
 <!-- Closes #123 -->
