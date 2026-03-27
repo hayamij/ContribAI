@@ -590,6 +590,15 @@ class ContribPipeline:
             result.repos_analyzed = 1
             return result
 
+        # Check PR permissions — skip repos that restrict PRs to collaborators
+        if await self._check_pr_permissions(repo):
+            logger.warning(
+                "🔒 %s restricts PRs to collaborators only, skipping.",
+                repo.full_name,
+            )
+            result.repos_analyzed = 1
+            return result
+
         # Fetch repo guidelines (CONTRIBUTING.md, PR template)
         guidelines = await fetch_repo_guidelines(self._github, repo.owner, repo.name)
         if guidelines.has_guidelines:
@@ -932,6 +941,14 @@ class ContribPipeline:
         if await self._check_ai_policy(repo):
             logger.warning(
                 "🚫 %s bans AI PRs, skipping issue solving.",
+                repo.full_name,
+            )
+            return result
+
+        # Check PR permissions — skip repos that restrict PRs to collaborators
+        if await self._check_pr_permissions(repo):
+            logger.warning(
+                "🔒 %s restricts PRs to collaborators, skipping issue solving.",
                 repo.full_name,
             )
             return result
@@ -1293,6 +1310,65 @@ class ContribPipeline:
             pass
 
         return False
+
+    async def _check_pr_permissions(self, repo: Repository) -> bool:
+        """Check if repo restricts PRs to collaborators only.
+
+        Uses the GitHub permission endpoint to detect whether the
+        authenticated user can open pull requests. This avoids wasting
+        ~30 minutes of LLM calls on generation only to get a 422 at PR
+        creation time.
+
+        Returns True if PR creation is blocked (should skip this repo).
+        """
+        try:
+            user = await self._github.get_authenticated_user()
+            username = user["login"]
+
+            # Check if we're a collaborator via the permission endpoint
+            try:
+                resp = await self._github._get(
+                    f"/repos/{repo.owner}/{repo.name}/collaborators/{username}/permission"
+                )
+                # If we get a valid response, we're a collaborator — no restriction.
+                return False
+            except Exception as perm_err:
+                err_str = str(perm_err).lower()
+                # 403 = not a collaborator. That's fine for public repos
+                # unless the repo has restricted PRs.
+                if "403" in err_str:
+                    # Not a collaborator. Check if the repo restricts PRs.
+                    # We can't know this from the API directly, so we try
+                    # to detect it from the repo's settings.
+                    # Fall through to the fork check below.
+                    pass
+                elif "404" in err_str:
+                    # Repo not found or private — skip
+                    return True
+                else:
+                    # Unknown error — don't block, let it fail later
+                    return False
+
+            # Try to fork as a lightweight permission test.
+            # If forking is disabled, PRs from non-collaborators are blocked.
+            try:
+                # Check if repo allows forking via the repo metadata
+                repo_data = await self._github._get(f"/repos/{repo.owner}/{repo.name}")
+                allow_forking = repo_data.get("allow_forking", True)
+                if not allow_forking:
+                    logger.warning(
+                        "🔒 %s has forking disabled — PRs restricted to collaborators",
+                        repo.full_name,
+                    )
+                    return True
+            except Exception:
+                pass
+
+            return False
+
+        except Exception as e:
+            logger.debug("PR permission check failed for %s: %s", repo.full_name, e)
+            return False  # Don't block on permission check failures
 
     async def _check_ci_and_close_if_failed(
         self,

@@ -155,6 +155,12 @@ class PRManager:
             return result
 
         except Exception as e:
+            err_msg = str(e).lower()
+            if "422" in err_msg and "collaborat" in err_msg:
+                raise PRCreationError(
+                    f"🔒 {target_repo.full_name} restricts PRs to collaborators only. "
+                    "Skipping — this repo cannot accept external contributions via fork."
+                ) from e
             raise PRCreationError(f"Failed to create PR: {e}") from e
 
     async def _fork_if_needed(self, username: str, repo: Repository) -> Repository:
