@@ -96,8 +96,10 @@ def cli(ctx, config, verbose):
 @click.option("--stars", "-s", default=None, help="Star range (e.g., 100-5000)")
 @click.option("--max-prs", "-m", type=int, default=None, help="Max PRs to create")
 @click.option("--dry-run", is_flag=True, help="Analyze and generate without creating PRs")
+@click.option("--human-review", is_flag=True, help="Pause for human approval before each PR")
+@click.option("--events-log", type=click.Path(), default=None, help="Write events to JSONL file")
 @click.pass_context
-def run(ctx, language, stars, max_prs, dry_run):
+def run(ctx, language, stars, max_prs, dry_run, human_review, events_log):
     """Auto-discover repositories and create contributions."""
     print_banner()
 
@@ -128,6 +130,14 @@ def run(ctx, language, stars, max_prs, dry_run):
     console.print(f"   LLM: {config.llm.provider} ({config.llm.model})")
     console.print()
 
+    # Apply review gate and events log
+    if human_review:
+        config.pipeline.human_review = True
+        console.print("   🔍 Human review: [green]ENABLED[/green]")
+    if events_log:
+        console.print(f"   📡 Events log: {events_log}")
+    console.print()
+
     from contribai.orchestrator.pipeline import ContribPipeline
 
     pipeline = ContribPipeline(config)
@@ -141,8 +151,9 @@ def run(ctx, language, stars, max_prs, dry_run):
 @click.argument("url")
 @click.option("--types", "-t", default=None, help="Contribution types (comma-separated)")
 @click.option("--dry-run", is_flag=True, help="Analyze and generate without creating PRs")
+@click.option("--human-review", is_flag=True, help="Pause for human approval before each PR")
 @click.pass_context
-def target(ctx, url, types, dry_run):
+def target(ctx, url, types, dry_run, human_review):
     """Target a specific repository for contributions."""
     print_banner()
 
@@ -161,7 +172,11 @@ def target(ctx, url, types, dry_run):
 
     mode = "[yellow]DRY RUN[/yellow]" if dry_run else "[green]LIVE[/green]"
     console.print(f"\n🎯 Targeting: {url} ({mode})")
-    console.print(f"   LLM: {config.llm.provider} ({config.llm.model})\n")
+    console.print(f"   LLM: {config.llm.provider} ({config.llm.model})")
+    if human_review:
+        config.pipeline.human_review = True
+        console.print("   🔍 Human review: [green]ENABLED[/green]")
+    console.print()
 
     from contribai.orchestrator.pipeline import ContribPipeline
 
@@ -182,8 +197,10 @@ def target(ctx, url, types, dry_run):
     help="Hunt mode: analysis (code scan), issues (solve issues), both",
 )
 @click.option("--dry-run", is_flag=True, help="Analyze without creating PRs")
+@click.option("--human-review", is_flag=True, help="Pause for human approval before each PR")
+@click.option("--events-log", type=click.Path(), default=None, help="Write events to JSONL file")
 @click.pass_context
-def hunt(ctx, rounds, delay, language, mode, dry_run):
+def hunt(ctx, rounds, delay, language, mode, dry_run, human_review, events_log):
     """🔥 Hunt mode: auto-discover repos and contribute aggressively.
 
     Searches GitHub for high-star, active repos that merge external PRs,
@@ -217,6 +234,11 @@ def hunt(ctx, rounds, delay, language, mode, dry_run):
     console.print(f"   Delay: {delay}s between rounds")
     console.print(f"   Languages: {', '.join(config.discovery.languages)}")
     console.print(f"   LLM: {config.llm.provider} ({config.llm.model})")
+    if human_review:
+        config.pipeline.human_review = True
+        console.print("   🔍 Human review: [green]ENABLED[/green]")
+    if events_log:
+        console.print(f"   📡 Events log: {events_log}")
     console.print()
 
     from contribai.orchestrator.pipeline import ContribPipeline

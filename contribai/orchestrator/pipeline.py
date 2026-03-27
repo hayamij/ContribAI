@@ -14,6 +14,7 @@ from contribai.agents.registry import create_default_registry
 from contribai.analysis.analyzer import CodeAnalyzer
 from contribai.analysis.context_compressor import ContextCompressor
 from contribai.core.config import ContribAIConfig
+from contribai.core.events import Event, EventBus, EventType, FileEventLogger
 from contribai.core.middleware import build_default_chain
 from contribai.core.models import (
     AnalysisResult,
@@ -110,6 +111,7 @@ class ContribPipeline:
         self._agent_registry = None
         self._tool_registry = None
         self._reviewer: HumanReviewer | None = None
+        self._event_bus: EventBus = EventBus()
 
     async def _init_components(self):
         """Initialize all pipeline components."""
@@ -187,6 +189,14 @@ class ContribPipeline:
             self._reviewer = HumanReviewer(auto_approve=True)
             logger.debug("Human review gate: disabled (auto-approve)")
 
+        # Event bus + file logger for observability
+        from pathlib import Path
+
+        events_path = Path(self.config.storage.resolved_db_path).parent / "events.jsonl"
+        file_logger = FileEventLogger(events_path)
+        self._event_bus.subscribe_all(file_logger.handle)
+        logger.info("📡 EventBus: logging to %s", events_path)
+
     async def _cleanup(self):
         """Clean up resources."""
         if self._github:
@@ -214,6 +224,9 @@ class ContribPipeline:
         await self._init_components()
         result = PipelineResult()
         run_id = await self._memory.start_run()
+        await self._event_bus.emit(
+            Event(type=EventType.PIPELINE_START, source="pipeline.run", data={"dry_run": dry_run})
+        )
 
         try:
             # Check daily PR limit
@@ -289,6 +302,18 @@ class ContribPipeline:
             )
 
         finally:
+            await self._event_bus.emit(
+                Event(
+                    type=EventType.PIPELINE_COMPLETE,
+                    source="pipeline.run",
+                    data={
+                        "repos": result.repos_analyzed,
+                        "prs": result.prs_created,
+                        "findings": result.findings_total,
+                        "errors": len(result.errors),
+                    },
+                )
+            )
             await self._cleanup()
 
         return result
@@ -359,6 +384,13 @@ class ContribPipeline:
                     "/".join(criteria.languages),
                     stars[0],
                     stars[1],
+                )
+                await self._event_bus.emit(
+                    Event(
+                        type=EventType.HUNT_ROUND_START,
+                        source="pipeline.hunt",
+                        data={"round": rnd, "total": rounds, "stars": list(stars)},
+                    )
                 )
 
                 repos = await self._discovery.discover(criteria)
@@ -541,6 +573,13 @@ class ContribPipeline:
                 repo.full_name,
                 len(cached_context),
             )
+            await self._event_bus.emit(
+                Event(
+                    type=EventType.MEMORY_RECALL,
+                    source="pipeline._process_repo",
+                    data={"repo": repo.full_name, "key": "analysis_summary"},
+                )
+            )
 
         # Check AI policy — skip repos that ban AI-generated PRs
         if await self._check_ai_policy(repo):
@@ -563,7 +602,21 @@ class ContribPipeline:
         # Analyze — set task context for model routing
         logger.info("🔬 Analyzing code...")
         self._set_task("analysis")
+        await self._event_bus.emit(
+            Event(
+                type=EventType.ANALYSIS_START,
+                source="pipeline._process_repo",
+                data={"repo": repo.full_name},
+            )
+        )
         analysis = await self._analyzer.analyze(repo)
+        await self._event_bus.emit(
+            Event(
+                type=EventType.ANALYSIS_COMPLETE,
+                source="pipeline._process_repo",
+                data={"repo": repo.full_name, "findings": len(analysis.findings)},
+            )
+        )
         result.findings_total = len(analysis.findings)
 
         await self._memory.record_analysis(
@@ -591,6 +644,13 @@ class ContribPipeline:
                 "💾 Saved analysis context for %s (%d findings)",
                 repo.full_name,
                 len(analysis.findings),
+            )
+            await self._event_bus.emit(
+                Event(
+                    type=EventType.MEMORY_STORE,
+                    source="pipeline._process_repo",
+                    data={"repo": repo.full_name, "key": "analysis_summary"},
+                )
             )
         except Exception as e:
             logger.debug("Failed to save context: %s", e)
@@ -757,7 +817,25 @@ class ContribPipeline:
         for finding in validated_findings:
             logger.info("🛠️ Generating fix for: %s", finding.title)
             self._set_task("code_gen")
+            await self._event_bus.emit(
+                Event(
+                    type=EventType.GENERATION_START,
+                    source="pipeline._process_repo",
+                    data={"repo": repo.full_name, "finding": finding.title},
+                )
+            )
             contribution = await self._generator.generate(finding, context, guidelines=guidelines)
+            await self._event_bus.emit(
+                Event(
+                    type=EventType.GENERATION_COMPLETE,
+                    source="pipeline._process_repo",
+                    data={
+                        "repo": repo.full_name,
+                        "finding": finding.title,
+                        "success": contribution is not None,
+                    },
+                )
+            )
 
             if not contribution:
                 continue
@@ -785,7 +863,17 @@ class ContribPipeline:
                 )
                 result.prs_created += 1
                 result.prs.append(pr_result)
-
+                await self._event_bus.emit(
+                    Event(
+                        type=EventType.PR_CREATED,
+                        source="pipeline._process_repo",
+                        data={
+                            "repo": repo.full_name,
+                            "pr_url": pr_result.pr_url,
+                            "title": contribution.title,
+                        },
+                    )
+                )
                 # Record in memory
                 await self._memory.record_pr(
                     repo=repo.full_name,
@@ -817,6 +905,13 @@ class ContribPipeline:
                 error = f"PR creation failed for {finding.title}: {e}"
                 logger.error(error)
                 result.errors.append(error)
+                await self._event_bus.emit(
+                    Event(
+                        type=EventType.PIPELINE_ERROR,
+                        source="pipeline._process_repo",
+                        data={"repo": repo.full_name, "error": error},
+                    )
+                )
 
         result.repos_analyzed = 1
         return result

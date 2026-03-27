@@ -14,6 +14,7 @@ import time
 import uuid
 from fnmatch import fnmatch
 
+from contribai.analysis.context_compressor import ContextCompressor
 from contribai.core.config import AnalysisConfig
 from contribai.core.models import (
     AnalysisResult,
@@ -75,6 +76,9 @@ class CodeAnalyzer:
         self._llm = llm
         self._github = github
         self._config = config
+        self._compressor = ContextCompressor(
+            max_context_tokens=getattr(config, "max_context_tokens", 30_000)
+        )
 
     async def analyze(self, repo: Repository) -> AnalysisResult:
         """Run full analysis on a repository.
@@ -227,12 +231,21 @@ class CodeAnalyzer:
         style_guide = self._build_style_guide(relevant_files)
         coding_style = f"PROJECT PROFILE:\n{profile}\n\nSTYLE GUIDE:\n{style_guide}"
 
+        # Compress files to fit within token budget
+        compressed_files = self._compressor.compress_files(relevant_files)
+        if len(compressed_files) < len(relevant_files):
+            logger.info(
+                "📦 Compressed context: %d → %d files",
+                len(relevant_files),
+                len(compressed_files),
+            )
+
         return RepoContext(
             repo=repo,
             file_tree=tree,
             readme_content=readme,
             contributing_guide=contributing,
-            relevant_files=relevant_files,
+            relevant_files=compressed_files,
             coding_style=coding_style,
         )
 
