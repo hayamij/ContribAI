@@ -6,6 +6,7 @@ Verifies HMAC-SHA256 signatures for security.
 
 from __future__ import annotations
 
+import json
 import logging
 
 from fastapi import APIRouter, Request
@@ -39,17 +40,24 @@ async def github_webhook(request: Request):
     if content_length and int(content_length) > MAX_PAYLOAD_SIZE:
         return JSONResponse({"error": "Payload too large"}, status_code=413)
 
+    # Read body once — used for signature check and payload size fallback
+    body = await request.body()
+
+    # Bug 4 fix: if content-length header is missing, check actual body size
+    if not content_length and len(body) > MAX_PAYLOAD_SIZE:
+        return JSONResponse({"error": "Payload too large"}, status_code=413)
+
     # Verify signature
     if _webhook_secret:
         signature = request.headers.get("X-Hub-Signature-256", "")
-        body = await request.body()
         if not verify_webhook_signature(body, signature, _webhook_secret):
             logger.warning("Invalid webhook signature")
-            return {"error": "Invalid signature"}, 403
+            # Bug 1 fix: use JSONResponse so FastAPI returns HTTP 403, not 200
+            return JSONResponse({"error": "Invalid signature"}, status_code=403)
 
     # Parse event
     event_type = request.headers.get("X-GitHub-Event", "")
-    payload = await request.json()
+    payload = json.loads(body)
 
     action = payload.get("action", "")
     repo_name = payload.get("repository", {}).get("full_name", "")

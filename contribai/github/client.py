@@ -93,6 +93,59 @@ class GitHubClient:
 
         raise last_error  # should never reach here
 
+    async def _request_raw(
+        self, method: str, url: str, *, _retries: int = 3, **kwargs
+    ) -> httpx.Response:
+        """Like _request() but returns the raw httpx.Response instead of parsed JSON.
+
+        Applies the same retry, rate-limit, and error-wrapping logic so callers
+        that need the raw response body (e.g. diff text) still benefit from all
+        reliability guarantees.
+        """
+        import asyncio
+
+        last_error = None
+        for attempt in range(1, _retries + 1):
+            try:
+                response = await self._client.request(method, url, **kwargs)
+            except httpx.HTTPError as e:
+                raise GitHubAPIError(f"HTTP error: {e}") from e
+
+            if response.status_code == 403:
+                remaining = response.headers.get("x-ratelimit-remaining", "?")
+                reset = response.headers.get("x-ratelimit-reset")
+                if remaining == "0":
+                    raise RateLimitError(reset_at=int(reset) if reset else None)
+                raise GitHubAPIError(f"Forbidden: {response.text}", status_code=403)
+
+            if response.status_code == 404:
+                raise GitHubAPIError(f"Not found: {url}", status_code=404)
+
+            if response.status_code >= 500:
+                last_error = GitHubAPIError(
+                    f"GitHub API error {response.status_code}: {response.text}",
+                    status_code=response.status_code,
+                )
+                if attempt < _retries:
+                    wait = 2**attempt
+                    logger.warning(
+                        "GitHub %d error on %s %s, retrying in %ds (attempt %d/%d)",
+                        response.status_code, method, url, wait, attempt, _retries,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                raise last_error
+
+            if response.status_code >= 400:
+                raise GitHubAPIError(
+                    f"GitHub API error {response.status_code}: {response.text}",
+                    status_code=response.status_code,
+                )
+
+            return response
+
+        raise last_error  # should never reach here
+
     async def _get(self, url: str, **kwargs) -> Any:
         return await self._request("GET", url, **kwargs)
 
@@ -379,13 +432,17 @@ class GitHubClient:
         )
 
     async def get_pr_diff(self, owner: str, repo: str, pr_number: int) -> str:
-        """Get the diff of a pull request."""
-        resp = await self._client.get(
+        """Get the diff of a pull request.
+
+        Bug 5 fix: use _request_raw() instead of self._client.get() directly so
+        that retry logic, rate-limit handling, and error wrapping all apply.
+        """
+        response = await self._request_raw(
+            "GET",
             f"/repos/{owner}/{repo}/pulls/{pr_number}",
             headers={"Accept": "application/vnd.github.v3.diff"},
         )
-        resp.raise_for_status()
-        return resp.text
+        return response.text
 
     async def get_authenticated_user(self) -> dict:
         """Get the authenticated user's profile."""

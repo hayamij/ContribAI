@@ -233,7 +233,7 @@ class ContextCompressor:
             )
             response = await llm.complete(
                 prompt,
-                system_prompt="You are a concise technical summarizer.",
+                system="You are a concise technical summarizer.",
             )
 
             # Parse structured response into template

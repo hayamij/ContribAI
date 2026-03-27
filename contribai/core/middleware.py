@@ -68,18 +68,26 @@ class Middleware(Protocol):
 
 
 class MiddlewareChain:
-    """Executes middlewares in order, passing context through each."""
+    """Executes middlewares in order, passing context through each.
 
-    def __init__(self, middlewares: list[Middleware]):
+    Index is stored per-call frame rather than as shared mutable state so that
+    RetryMiddleware can re-invoke the chain from the same position without
+    silently skipping downstream middlewares on the second attempt.
+    """
+
+    def __init__(self, middlewares: list[Middleware], _start_index: int = 0):
         self._middlewares = list(middlewares)
-        self._index = 0
+        self._start_index = _start_index
 
     async def __call__(self, ctx: PipelineContext) -> PipelineContext:
-        if self._index >= len(self._middlewares):
+        # Bug 2 fix: use a snapshot of the current index rather than advancing
+        # shared mutable state. Each call creates a child chain at the next
+        # position, so retries re-enter from the correct position.
+        if self._start_index >= len(self._middlewares):
             return ctx
-        mw = self._middlewares[self._index]
-        self._index += 1
-        return await mw.process(ctx, self)
+        mw = self._middlewares[self._start_index]
+        next_chain = MiddlewareChain(self._middlewares, self._start_index + 1)
+        return await mw.process(ctx, next_chain)
 
 
 # ── Built-in Middlewares ──────────────────────────────────────────────────
