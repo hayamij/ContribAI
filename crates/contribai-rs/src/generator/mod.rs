@@ -1,3 +1,4 @@
-//! Code contribution generator.
+//! Code generation engine and PR management.
 
-// TODO: Phase 5
+pub mod engine;
+pub mod scorer;

@@ -1,3 +1,4 @@
-//! Pull request lifecycle management.
+//! Pull Request lifecycle and patrol management.
 
-// TODO: Phase 5
+pub mod manager;
+pub mod patrol;

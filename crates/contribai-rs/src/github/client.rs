@@ -852,6 +852,88 @@ impl GitHubClient {
             .await?;
         Ok(data["items"].as_array().cloned().unwrap_or_default())
     }
+
+    /// Get the blob SHA of a file (needed for updates).
+    pub async fn get_file_sha(
+        &self,
+        owner: &str,
+        repo: &str,
+        path: &str,
+        ref_name: Option<&str>,
+    ) -> Result<String> {
+        let url = format!("/repos/{}/{}/contents/{}", owner, repo, path);
+        let data = if let Some(r) = ref_name {
+            self.get_with_params(&url, &[("ref", r)]).await?
+        } else {
+            self.get(&url).await?
+        };
+        Ok(data["sha"].as_str().unwrap_or("").to_string())
+    }
+
+    /// Get PR details.
+    pub async fn get_pr_details(
+        &self,
+        owner: &str,
+        repo: &str,
+        pr_number: i64,
+    ) -> Result<Value> {
+        self.get(&format!("/repos/{}/{}/pulls/{}", owner, repo, pr_number))
+            .await
+    }
+
+    /// Get issues assigned to a user.
+    pub async fn get_assigned_issues(
+        &self,
+        owner: &str,
+        repo: &str,
+        assignee: &str,
+    ) -> Result<Vec<Value>> {
+        let data = self
+            .get_with_params(
+                &format!("/repos/{}/{}/issues", owner, repo),
+                &[("assignee", assignee), ("state", "open")],
+            )
+            .await?;
+        Ok(data.as_array().cloned().unwrap_or_default())
+    }
+
+    /// Create an issue.
+    pub async fn create_issue(
+        &self,
+        owner: &str,
+        repo: &str,
+        title: &str,
+        body: &str,
+    ) -> Result<Value> {
+        self.post(
+            &format!("/repos/{}/{}/issues", owner, repo),
+            &serde_json::json!({ "title": title, "body": body }),
+        )
+        .await
+    }
+
+    /// Close an issue.
+    pub async fn close_issue(
+        &self,
+        owner: &str,
+        repo: &str,
+        issue_number: i64,
+        comment: Option<&str>,
+    ) -> Result<()> {
+        if let Some(c) = comment {
+            self.post(
+                &format!("/repos/{}/{}/issues/{}/comments", owner, repo, issue_number),
+                &serde_json::json!({ "body": c }),
+            )
+            .await?;
+        }
+        self.patch(
+            &format!("/repos/{}/{}/issues/{}", owner, repo, issue_number),
+            &serde_json::json!({ "state": "closed" }),
+        )
+        .await?;
+        Ok(())
+    }
 }
 
 // ── Helper Types & Functions ──────────────────────────────────────────────────
