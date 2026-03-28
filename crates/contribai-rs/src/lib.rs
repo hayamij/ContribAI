@@ -12,10 +12,12 @@
 //! - `rusqlite` for outcome memory
 //! - `tokio` for async concurrency
 
+pub mod agents;
 pub mod analysis;
 pub mod core;
 pub mod generator;
 pub mod github;
+pub mod issues;
 pub mod llm;
 pub mod mcp;
 pub mod orchestrator;
