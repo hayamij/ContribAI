@@ -1,6 +1,6 @@
 # ContribAI Codebase Summary
 
-**Version:** 3.0.2 | **Total LOC:** ~5,500+ | **Modules:** 14 | **Test Files:** 25+
+**Version:** 3.0.6 | **Total LOC:** ~5,500+ | **Modules:** 14 | **Test Files:** 32
 
 ---
 
@@ -289,7 +289,7 @@ tests/
 └── conftest.py             # Shared fixtures
 ```
 
-**Test Coverage:** > 85% (enforced in CI)
+**Test Coverage:** ~53% (threshold: 50%)
 
 **Test Tools:**
 - `pytest` — Test framework

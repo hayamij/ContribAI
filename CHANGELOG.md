@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.6] - 2026-03-28
+
+### Added
+- **SKIP_DIRECTORIES filter**: 19 low-value directory patterns (`examples/`, `docs/`, `tests/`, `benchmarks/`, `vendor/`, etc.) — prevents useless PRs targeting non-core code
+- **Auto-close linked issues**: When a PR is closed (CI failure or maintainer rejection), automatically closes any linked issues (`Closes/Fixes/Resolves #N`)
+- **Patrol close detection**: PR Patrol now detects closed (non-merged) PRs and triggers issue cleanup
+- **HALL_OF_FAME.md**: Showcase of merged PRs across external repositories
+- **README stats section**: Real outcome metrics (34+ PRs, 9 merged, 21 repos)
+- `GitHubClient.close_issue()` method with `state_reason: not_planned`
+
+### Fixed
+- Pipeline no longer generates PRs for `examples/`, `docs/`, `tests/`, `benchmarks/` directories
+- Issue solver now respects SKIP_DIRECTORIES filter in `_is_code_file` check
+- Git push configured for GitHub email privacy (`tang-vu@users.noreply.github.com`)
+
 ## [3.0.5] - 2026-03-28
 
 ### Fixed

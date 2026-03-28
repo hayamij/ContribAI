@@ -1,6 +1,6 @@
 # Project Roadmap
 
-**Current Version:** 3.0.2 | **Release Date:** 2026-03-28 | **Status:** Active Development
+**Current Version:** 3.0.6 | **Release Date:** 2026-03-28 | **Status:** Active Development
 
 ---
 
@@ -12,15 +12,15 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ## Release Timeline
 
-### v0.x Series (2024 Q1-Q3) — Foundation Building
+### v0.x Series (2026-03-17 to 2026-03-20) — Foundation Building
 
 | Version | Date | Milestone | Status |
 |---------|------|-----------|--------|
-| **v0.1** | 2024-01 | Core pipeline (discovery → analysis → generation → PR) | ✓ Complete |
-| **v0.4** | 2024-02 | Web dashboard + REST API | ✓ Complete |
-| **v0.5** | 2024-03 | Scheduler + cron automation | ✓ Complete |
-| **v0.7** | 2024-04 | Multi-LLM support (Gemini, OpenAI, Anthropic, Ollama) | ✓ Complete |
-| **v0.11** | 2024-06 | Hunt Mode (autonomous multi-round hunting) | ✓ Complete |
+| **v0.1** | 2026-03-17 | Core pipeline (discovery → analysis → generation → PR) | ✓ Complete |
+| **v0.4** | 2026-03-18 | Web dashboard + REST API | ✓ Complete |
+| **v0.5** | 2026-03-18 | Scheduler + cron automation | ✓ Complete |
+| **v0.7** | 2026-03-19 | Multi-LLM support (Gemini, OpenAI, Anthropic, Ollama) | ✓ Complete |
+| **v0.11** | 2026-03-20 | Hunt Mode (autonomous multi-round hunting) | ✓ Complete |
 
 **Key Achievements:**
 - ✓ Autonomous PR creation at scale
@@ -31,13 +31,13 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ---
 
-### v1.x Series (2024 Q3-Q4) — Quality & Safety
+### v1.x Series (2026-03-20) — Quality & Safety
 
 | Version | Date | Milestone | Status |
 |---------|------|-----------|--------|
-| **v1.0** | 2024-07 | Official release; quality improvements | ✓ Complete |
-| **v1.5** | 2024-08 | CLA/DCO handling; compliance automation | ✓ Complete |
-| **v1.8** | 2024-09 | Cross-file pattern detection + bulk fixes | ✓ Complete |
+| **v1.0** | 2026-03-20 | Official release; quality improvements | ✓ Complete |
+| **v1.5** | 2026-03-20 | CLA/DCO handling; compliance automation | ✓ Complete |
+| **v1.8** | 2026-03-20 | Cross-file pattern detection + bulk fixes | ✓ Complete |
 
 **Key Achievements:**
 - ✓ AI policy detection (respects contributor bans)
@@ -48,16 +48,16 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ---
 
-### v2.x Series (2024 Q4 - 2025 Q1) — Learning & Resilience
+### v2.x Series (2026-03-22 to 2026-03-26) — Learning & Resilience
 
 | Version | Date | Milestone | Status |
 |---------|------|-----------|--------|
-| **v2.0** | 2024-10 | Safety gates (quality scorer, duplicate prevention) | ✓ Complete |
-| **v2.2** | 2024-11 | PR Patrol (auto-monitor + auto-fix feedback) | ✓ Complete |
-| **v2.4** | 2024-12 | Outcome memory (learns from PR results) | ✓ Complete |
-| **v2.6** | 2025-01 | MCP server (14 tools for Claude Desktop) | ✓ Complete |
-| **v2.7** | 2025-02 | Event bus (15 typed events) + working memory | ✓ Complete |
-| **v2.8** | 2025-03 | Context compression + progressive skills | ✓ Complete |
+| **v2.0** | 2026-03-22 | Safety gates (quality scorer, duplicate prevention) | ✓ Complete |
+| **v2.2** | 2026-03-23 | PR Patrol (auto-monitor + auto-fix feedback) | ✓ Complete |
+| **v2.4** | 2026-03-25 | Outcome memory (learns from PR results) | ✓ Complete |
+| **v2.6** | 2026-03-26 | MCP server (14 tools for Claude Desktop) | ✓ Complete |
+| **v2.7** | 2026-03-26 | Event bus (15 typed events) + working memory | ✓ Complete |
+| **v2.8** | 2026-03-26 | Context compression + progressive skills | ✓ Complete |
 
 **Key Achievements:**
 - ✓ Quality scoring (7-check gate, 0.6 min threshold)
@@ -70,13 +70,15 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ---
 
-### v3.x Series (2025 Q1-Present) — Production Hardening & Ecosystem
+### v3.x Series (2026-03-26 to Present) — Production Hardening & Ecosystem
 
 | Version | Date | Milestone | Status |
 |---------|------|-----------|--------|
-| **v3.0.0** | 2025-03-15 | EventBus system, Formatter, MCP Client, CLI flags | ✓ Complete |
-| **v3.0.1** | 2025-03-20 | Code generation quality improvements + retry logic | ✓ Complete |
-| **v3.0.2** | 2025-03-28 | Token efficiency, bug fixes, doc generation | ✓ Complete |
+| **v3.0.0** | 2026-03-26 | EventBus system, Formatter, MCP Client, CLI flags | ✓ Complete |
+| **v3.0.2** | 2026-03-28 | Token efficiency, bug fixes, doc generation | ✓ Complete |
+| **v3.0.4** | 2026-03-28 | Security hardening (constant-time API keys, webhook validation) | ✓ Complete |
+| **v3.0.5** | 2026-03-28 | Critical bug fixes (webhook bypass, retry re-entry, context compressor) | ✓ Complete |
+| **v3.0.6** | 2026-03-28 | SKIP_DIRECTORIES filter, auto-close linked issues, HALL_OF_FAME | ✓ Complete |
 
 **Key Achievements (v3.0.x):**
 - ✓ Enhanced event bus with JSONL logging
@@ -92,7 +94,7 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ## Feature Status Matrix
 
-### Core Pipeline (v3.0.2)
+### Core Pipeline (v3.0.6)
 
 | Feature | Status | Details |
 |---------|--------|---------|
@@ -104,7 +106,7 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 | Cross-file fixes | ✓ Complete | Bulk fix capability for pattern repetition |
 | Issue-driven solving | ✓ Complete | Fetch + solve open GitHub issues |
 
-### Safety & Compliance (v3.0.2)
+### Safety & Compliance (v3.0.6)
 
 | Feature | Status | Details |
 |---------|--------|---------|
@@ -117,7 +119,7 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 | Deep validation | ✓ Complete | LLM validates findings vs. full file context |
 | Dry-run mode | ✓ Complete | Preview without PR creation |
 
-### Platform Features (v3.0.2)
+### Platform Features (v3.0.6)
 
 | Feature | Status | Details |
 |---------|--------|---------|
@@ -130,7 +132,7 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 | Notifications | ✓ Complete | Slack, Discord, Telegram integrations |
 | API quotas | ✓ Complete | Daily usage tracking + limits |
 
-### Architecture & Internals (v3.0.2)
+### Architecture & Internals (v3.0.6)
 
 | Feature | Status | Details |
 |---------|--------|---------|
@@ -308,24 +310,24 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ## Success Metrics & KPIs
 
-### Current State (v3.0.2)
+### Current State (v3.0.6)
 
 | Metric | Current | Target (v3.1) | Target (v4.0) |
 |--------|---------|---|---|
 | **Repos analyzed/day** | 50+ | 200+ | 1000+ |
 | **PRs created/day** | 10-15 | 50+ | 200+ |
-| **PR success rate** | 80% | 85% | 90% |
+| **PR merge rate** | ~26% (9/34) | 50% | 75% |
 | **Avg time-to-merge** | 7 days | 5 days | 3 days |
-| **False positive rate** | 5% | <3% | <1% |
+| **False positive rate** | ~15% | <5% | <1% |
 | **Code quality score avg** | 0.75/1.0 | 0.80/1.0 | 0.85/1.0 |
-| **Test coverage** | 85% | 90% | 95% |
+| **Test coverage** | 53% | 70% | 85% |
 
 ### User Engagement
 
 | Metric | Current | Target (v3.1) | Target (v4.0) |
 |--------|---------|---|---|
-| **GitHub stars** | 200+ | 500+ | 2000+ |
-| **Active instances** | 30+ | 100+ | 500+ |
+| **GitHub stars** | ~180 | 500+ | 2000+ |
+| **Active instances** | 1 | 10+ | 100+ |
 | **Plugin ecosystem** | 0 | 5+ | 50+ |
 | **Community contributions** | Low | Medium | High |
 
@@ -333,7 +335,7 @@ ContribAI is a mature autonomous AI contribution system with a robust foundation
 
 ## Known Limitations & Future Improvements
 
-### Current Limitations (v3.0.2)
+### Current Limitations (v3.0.6)
 
 1. **Single-instance only** — No distributed deployment yet
    - **Fix planned:** v3.1.0 (PostgreSQL + Redis)
