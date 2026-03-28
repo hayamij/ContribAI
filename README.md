@@ -13,7 +13,8 @@
 |--------|-------|
 | **PRs Submitted** | 43+ |
 | **PRs Merged** | 9 |
-| **Repos Contributed** | 21 |
+| **PRs Closed** | 14 |
+| **Repos Contributed** | 21+ |
 | **Notable Repos** | Worldmonitor (45k⭐), Maigret (19k⭐), AI-Research-SKILLs (6k⭐), s-tui (5k⭐) |
 
 > Set it up once, wake up to merged PRs. See the [**Hall of Fame →**](HALL_OF_FAME.md)
@@ -192,7 +193,7 @@ my_analyzer = "my_package:MyAnalyzer"
 
 | Doc | Description |
 |-----|-------------|
-| [`HALL_OF_FAME.md`](HALL_OF_FAME.md) | **9 merged PRs** across 21 repos — real results |
+| [`HALL_OF_FAME.md`](HALL_OF_FAME.md) | **9 merged** · **14 closed** across 21+ repos — real results |
 | [`system-architecture.md`](docs/system-architecture.md) | Pipeline, middleware, events, LLM routing |
 | [`code-standards.md`](docs/code-standards.md) | Conventions, patterns, testing |
 | [`deployment-guide.md`](docs/deployment-guide.md) | Install, Docker, config, CLI reference |
