@@ -28,6 +28,7 @@ pub mod sandbox;
 pub mod scheduler;
 pub mod templates;
 pub mod tools;
+pub mod web;
 
 /// Current version of ContribAI.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

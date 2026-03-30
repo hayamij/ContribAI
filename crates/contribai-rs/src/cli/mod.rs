@@ -79,6 +79,17 @@ enum Commands {
     /// Start MCP server for Claude/Antigravity integration
     McpServer,
 
+    /// Start the web dashboard API server
+    WebServer {
+        /// Host to bind (default: 127.0.0.1)
+        #[arg(long, default_value = "127.0.0.1")]
+        host: String,
+
+        /// Port to listen on (default: 5000)
+        #[arg(short, long, default_value = "5000")]
+        port: u16,
+    },
+
     /// Show contribution statistics
     Stats,
 
@@ -320,6 +331,21 @@ impl Cli {
                 println!("  Arch:  {}", std::env::consts::ARCH);
                 println!("  OS:    {}", std::env::consts::OS);
                 Ok(())
+            }
+
+            Commands::WebServer { host, port } => {
+                print_banner();
+                println!(
+                    "  🌐 Starting web dashboard on {}:{}",
+                    host.cyan(),
+                    port.to_string().cyan()
+                );
+                println!("  Open http://{}:{} in your browser\n", host, port);
+                let config = load_config(self.config.as_deref())?;
+                let memory = create_memory(&config)?;
+                contribai::web::run_server(memory, &host, port)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{}", e))
             }
         }
     }

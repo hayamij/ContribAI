@@ -63,6 +63,11 @@ futures = "0.3"
 async-trait = "0.1"
 which = "7"
 
+# Web server (dashboard API)
+axum = { version = "0.7", features = ["json", "query"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
 # Console output
 colored = "2"
 indicatif = "0.17"
