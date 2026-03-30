@@ -853,6 +853,100 @@ impl GitHubClient {
         Ok(data["items"].as_array().cloned().unwrap_or_default())
     }
 
+    // ── GraphQL API ────────────────────────────────────────────────────────────
+
+    /// Execute a GraphQL query against the GitHub API v4.
+    ///
+    /// Python equivalent: `github/client.py:graphql_query()`
+    pub async fn graphql_query(
+        &self,
+        query: &str,
+        variables: serde_json::Value,
+    ) -> Result<Value> {
+        let body = serde_json::json!({
+            "query": query,
+            "variables": variables,
+        });
+
+        let response = self
+            .client
+            .post("https://api.github.com/graphql")
+            .header("Authorization", format!("Bearer {}", self.token))
+            .header("User-Agent", "contribai-rust/5.1.0")
+            .json(&body)
+            .send()
+            .await
+            .map_err(|e| crate::core::error::ContribError::GitHub(format!("GraphQL HTTP error: {}", e)))?;
+
+        let data: Value = response
+            .json()
+            .await
+            .map_err(|e| crate::core::error::ContribError::GitHub(format!("GraphQL parse error: {}", e)))?;
+
+        if let Some(errors) = data["errors"].as_array() {
+            let msg = errors.iter()
+                .filter_map(|e| e["message"].as_str())
+                .collect::<Vec<_>>()
+                .join("; ");
+            return Err(crate::core::error::ContribError::GitHub(format!("GraphQL errors: {}", msg)));
+        }
+
+        Ok(data["data"].clone())
+    }
+
+    /// Search for solvable issues using GraphQL (richer data than REST).
+    ///
+    /// Returns issues with label info, comment counts, and author info.
+    /// Python equivalent: `github/client.py:search_issues_graphql()`
+    pub async fn search_issues_graphql(
+        &self,
+        query_str: &str,
+        limit: usize,
+    ) -> Result<Vec<Value>> {
+        let query = r#"
+            query($q: String!, $limit: Int!) {
+                search(query: $q, type: ISSUE, first: $limit) {
+                    nodes {
+                        ... on Issue {
+                            number
+                            title
+                            url
+                            body
+                            state
+                            createdAt
+                            updatedAt
+                            comments { totalCount }
+                            labels(first: 10) {
+                                nodes { name }
+                            }
+                            repository {
+                                nameWithOwner
+                                stargazerCount
+                                primaryLanguage { name }
+                            }
+                            assignees(first: 3) {
+                                nodes { login }
+                            }
+                        }
+                    }
+                }
+            }
+        "#;
+
+        let variables = serde_json::json!({
+            "q": query_str,
+            "limit": limit,
+        });
+
+        let data = self.graphql_query(query, variables).await?;
+        let nodes = data["search"]["nodes"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+
+        Ok(nodes.into_iter().filter(|n| !n.is_null()).collect())
+    }
+
     /// Get the blob SHA of a file (needed for updates).
     pub async fn get_file_sha(
         &self,

@@ -123,6 +123,15 @@ impl Cli {
                 let memory = create_memory(&config)?;
                 let event_bus = contribai::core::events::EventBus::default();
 
+                // ── v5.4: JSONL event logger ─────────────────────────────────
+                let log_path = dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".contribai")
+                    .join("events.jsonl");
+                let _log_handle = contribai::core::events::FileEventLogger::new(&log_path)
+                    .spawn_logger(&event_bus);
+                println!("   {}: {}", "Event log".dimmed(), log_path.display());
+
                 let pipeline = contribai::orchestrator::pipeline::ContribPipeline::new(
                     &config, &github, llm.as_ref(), &memory, &event_bus,
                 );
@@ -156,6 +165,14 @@ impl Cli {
                 let llm = create_llm(&config)?;
                 let memory = create_memory(&config)?;
                 let event_bus = contribai::core::events::EventBus::default();
+
+                // ── v5.4: JSONL event logger ─────────────────────────────────
+                let log_path = dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".contribai")
+                    .join("events.jsonl");
+                let _log_handle = contribai::core::events::FileEventLogger::new(&log_path)
+                    .spawn_logger(&event_bus);
 
                 let pipeline = contribai::orchestrator::pipeline::ContribPipeline::new(
                     &config, &github, llm.as_ref(), &memory, &event_bus,
