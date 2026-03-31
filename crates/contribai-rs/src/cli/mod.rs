@@ -4,6 +4,7 @@
 //! arrow-key menus, and all operations accessible without editing YAML.
 
 pub mod config_editor;
+pub mod tui;
 pub mod wizard;
 
 use clap::{Parser, Subcommand};
@@ -215,6 +216,9 @@ enum Commands {
 
     /// Show ContribAI system status — memory DB, PRs, GitHub rate limits
     SystemStatus,
+
+    /// Interactive TUI mode — browse PRs, repos, and run operations
+    Interactive,
 }
 
 impl Cli {
@@ -801,7 +805,7 @@ impl Cli {
             }
 
             Commands::NotifyTest => {
-                run_notify_test(self.config.as_deref())
+                run_notify_test(self.config.as_deref()).await
             }
 
             Commands::Cleanup { yes } => {
@@ -820,6 +824,11 @@ impl Cli {
 
             Commands::SystemStatus => {
                 run_system_status(self.config.as_deref()).await
+            }
+
+            Commands::Interactive => {
+                let config = load_config(self.config.as_deref())?;
+                tui::run_interactive_tui(&config).map_err(|e| e.into())
             }
         }
     }
@@ -841,19 +850,27 @@ fn run_interactive_menu() -> anyhow::Result<Commands> {
     println!();
 
     let items = vec![
-        "🚀  Run         — discover repos and submit PRs",
-        "🎯  Target      — analyze a specific repo",
-        "🔍  Analyze     — dry-run analysis only",
-        "🐛  Solve       — solve open issues",
-        "👁   Patrol      — monitor open PRs",
-        "🕵️  Hunt        — aggressive multi-round hunt",
-        "📊  Stats       — contribution statistics",
-        "📋  Status      — show submitted PRs",
-        "🌐  Web server  — start dashboard",
-        "⚙️   Config      — show current config",
-        "🛠   Config set  — change a setting",
-        "🔐  Login       — check auth status",
-        "✨  Init        — setup wizard",
+        "🖥️   Interactive  — full TUI browser (PRs, repos, actions)",
+        "🚀  Run          — discover repos and submit PRs",
+        "🎯  Target       — analyze a specific repo",
+        "🔍  Analyze      — dry-run analysis only",
+        "🐛  Solve        — solve open issues",
+        "👁   Patrol       — monitor open PRs",
+        "🕵️  Hunt         — aggressive multi-round hunt",
+        "📊  Stats        — contribution statistics",
+        "📋  Leaderboard  — merge rate & repo rankings",
+        "📋  Status       — show submitted PRs",
+        "🤖  Models       — list available LLM models",
+        "📝  Templates    — list contribution templates",
+        "🎨  Profile      — run with a named profile",
+        "🧹  Cleanup      — delete merged PR forks",
+        "🌐  Web server   — start dashboard",
+        "📡  System status — DB, rate limits, scheduler",
+        "🔔  Notify test  — test notification channels",
+        "⚙️   Config       — show current config",
+        "🛠   Config set   — change a setting",
+        "🔐  Login        — check auth status",
+        "✨  Init         — setup wizard",
         "❌  Exit",
     ];
 
@@ -866,33 +883,46 @@ fn run_interactive_menu() -> anyhow::Result<Commands> {
     println!();
 
     Ok(match selection {
-        0 => Commands::Run { language: None, stars: None, dry_run: false },
-        1 => {
+        0  => Commands::Interactive,
+        1  => Commands::Run { language: None, stars: None, dry_run: false },
+        2  => {
             let url: String = dialoguer::Input::new()
                 .with_prompt("Repository URL")
                 .interact_text()?;
             Commands::Target { url, dry_run: false }
         }
-        2 => {
+        3  => {
             let url: String = dialoguer::Input::new()
                 .with_prompt("Repository URL")
                 .interact_text()?;
             Commands::Analyze { url }
         }
-        3 => {
+        4  => {
             let url: String = dialoguer::Input::new()
                 .with_prompt("Repository URL")
                 .interact_text()?;
             Commands::Solve { url, dry_run: false }
         }
-        4 => Commands::Patrol { dry_run: false },
-        5 => Commands::Hunt { rounds: 5, delay: 30, language: None, dry_run: false },
-        6 => Commands::Stats,
-        7 => Commands::Status { filter: None, limit: 20 },
-        8 => Commands::WebServer { host: "127.0.0.1".into(), port: 8787 },
-        9 => Commands::Config,
-        10 => {
-            // Config set sub-menu
+        5  => Commands::Patrol { dry_run: false },
+        6  => Commands::Hunt { rounds: 5, delay: 30, language: None, dry_run: false },
+        7  => Commands::Stats,
+        8  => Commands::Leaderboard { limit: 20 },
+        9  => Commands::Status { filter: None, limit: 20 },
+        10 => Commands::Models { task: None },
+        11 => Commands::Templates { r#type: None },
+        12 => {
+            let name: String = dialoguer::Input::new()
+                .with_prompt("Profile name (or 'list' to see all)")
+                .default("list".into())
+                .interact_text()?;
+            Commands::Profile { name, dry_run: false }
+        }
+        13 => Commands::Cleanup { yes: false },
+        14 => Commands::WebServer { host: "127.0.0.1".into(), port: 8787 },
+        15 => Commands::SystemStatus,
+        16 => Commands::NotifyTest,
+        17 => Commands::Config,
+        18 => {
             let key: String = dialoguer::Input::new()
                 .with_prompt("Config key (e.g. llm.provider)")
                 .interact_text()?;
@@ -901,9 +931,9 @@ fn run_interactive_menu() -> anyhow::Result<Commands> {
                 .interact_text()?;
             Commands::ConfigSet { key, value }
         }
-        11 => Commands::Login,
-        12 => Commands::Init { output: None },
-        _ => std::process::exit(0),
+        19 => Commands::Login,
+        20 => Commands::Init { output: None },
+        _  => std::process::exit(0),
     })
 }
 
@@ -1239,46 +1269,117 @@ fn run_models(task_filter: Option<&str>) -> anyhow::Result<()> {
 
 // ── Notify test ───────────────────────────────────────────────────────────────
 
-fn run_notify_test(config_path: Option<&str>) -> anyhow::Result<()> {
+async fn run_notify_test(config_path: Option<&str>) -> anyhow::Result<()> {
     use colored::Colorize;
 
     let config = load_config(config_path)?;
     let n = &config.notifications;
 
-    let slack = n.slack_webhook.as_deref().unwrap_or("");
+    let slack   = n.slack_webhook.as_deref().unwrap_or("");
     let discord = n.discord_webhook.as_deref().unwrap_or("");
-    let telegram = n.telegram_token.as_deref().unwrap_or("");
+    let tg_token = n.telegram_token.as_deref().unwrap_or("");
+    let tg_chat  = n.telegram_chat_id.as_deref().unwrap_or("");
 
-    let channels_configured = !slack.is_empty() || !discord.is_empty() || !telegram.is_empty();
+    let channels_configured = !slack.is_empty() || !discord.is_empty() || !tg_token.is_empty();
 
     if !channels_configured {
-        println!(
-            "  {} No notification channels configured in config.yaml",
-            "⚠️".yellow()
-        );
-        println!("  Add slack_webhook, discord_webhook, or telegram_token under notifications:");
-        println!("    {}", "contribai config-set notifications.slack_webhook https://hooks.slack.com/...".cyan());
+        println!("  {} No notification channels configured in config.yaml", "⚠️".yellow());
+        println!("  Set one of these first:");
+        println!("    {}", "contribai config-set notifications.slack_webhook https://hooks.slack.com/services/...".cyan());
+        println!("    {}", "contribai config-set notifications.discord_webhook https://discord.com/api/webhooks/...".cyan());
+        println!("    {}", "contribai config-set notifications.telegram_token <bot-token>".cyan());
         return Ok(());
     }
 
     println!("{}", "📣 Sending test notifications...".cyan().bold());
+    println!("{}", "━".repeat(50).dimmed());
 
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()?;
+
+    let title = "🤖 ContribAI Test Notification";
+    let body  = "✅ Your ContribAI notifications are working! This is a test message from `contribai notify-test`.";
+
+    // ── Slack ──────────────────────────────────────────────────────────────
     if !slack.is_empty() {
-        println!("  🔔 Slack: {}", slack.chars().take(40).collect::<String>().dimmed());
+        print!("  🔔 Slack:   {} ... ", slack.chars().take(40).collect::<String>().dimmed());
+        std::io::Write::flush(&mut std::io::stdout()).ok();
+
+        let payload = serde_json::json!({
+            "text": format!("*{}*\n{}", title, body),
+        });
+
+        match client.post(slack).json(&payload).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                println!("{}", "✅ sent".green());
+            }
+            Ok(resp) => {
+                println!("{} (HTTP {})", "❌ failed".red(), resp.status());
+            }
+            Err(e) => {
+                println!("{}: {}", "❌ error".red(), e);
+            }
+        }
     }
+
+    // ── Discord ────────────────────────────────────────────────────────────
     if !discord.is_empty() {
-        println!("  🎮 Discord: configured");
+        print!("  🎮 Discord: configured ... ");
+        std::io::Write::flush(&mut std::io::stdout()).ok();
+
+        let payload = serde_json::json!({
+            "content": format!("**{}**\n{}", title, body),
+        });
+
+        match client.post(discord).json(&payload).send().await {
+            Ok(resp) if resp.status().is_success() || resp.status().as_u16() == 204 => {
+                println!("{}", "✅ sent".green());
+            }
+            Ok(resp) => {
+                println!("{} (HTTP {})", "❌ failed".red(), resp.status());
+            }
+            Err(e) => {
+                println!("{}: {}", "❌ error".red(), e);
+            }
+        }
     }
-    if !telegram.is_empty() {
-        let chat = n.telegram_chat_id.as_deref().unwrap_or("");
-        println!("  📱 Telegram: chat {}", chat.dimmed());
+
+    // ── Telegram ───────────────────────────────────────────────────────────
+    if !tg_token.is_empty() {
+        print!("  📱 Telegram: chat {} ... ", tg_chat.dimmed());
+        std::io::Write::flush(&mut std::io::stdout()).ok();
+
+        if tg_chat.is_empty() {
+            println!("{}", "⚠️  telegram_chat_id not set".yellow());
+        } else {
+            let url = format!("https://api.telegram.org/bot{}/sendMessage", tg_token);
+            let payload = serde_json::json!({
+                "chat_id": tg_chat,
+                "text": format!("<b>{}</b>\n{}", title, body),
+                "parse_mode": "HTML",
+            });
+
+            match client.post(&url).json(&payload).send().await {
+                Ok(resp) if resp.status().is_success() => {
+                    println!("{}", "✅ sent".green());
+                }
+                Ok(resp) => {
+                    let txt = resp.text().await.unwrap_or_default();
+                    println!("{}: {}", "❌ failed".red(), txt.chars().take(80).collect::<String>());
+                }
+                Err(e) => {
+                    println!("{}: {}", "❌ error".red(), e);
+                }
+            }
+        }
     }
 
     println!();
-    println!("  {} Test notification fired! Check your channels.", "✅".green());
-    println!("  {} Actual delivery requires async HTTP — run 'contribai web-server' for full webhook.", "→".dimmed());
+    println!("  {} All channels tested. Check your apps!", "🎉".green().bold());
     Ok(())
 }
+
 
 // ── Cleanup ───────────────────────────────────────────────────────────────────
 

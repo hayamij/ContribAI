@@ -1,6 +1,6 @@
 [package]
 name = "contribai"
-version = "5.0.0"
+version = "5.1.0"
 edition = "2021"
 authors = ["tang-vu <tang.vu@contribai.dev>"]
 description = "AI agent that autonomously contributes to open source projects on GitHub"
@@ -80,6 +80,10 @@ indicatif = "0.17"
 # Interactive CLI (wizard, menus, password input)
 dialoguer = { version = "0.11", features = ["fuzzy-select"] }
 console = "0.15"
+
+# Terminal UI
+ratatui = "0.29"
+crossterm = { version = "0.28", features = ["event-stream"] }
 
 [dev-dependencies]
 mockall = "0.13"
