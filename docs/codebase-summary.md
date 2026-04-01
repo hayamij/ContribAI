@@ -1,6 +1,6 @@
 # ContribAI Codebase Summary
 
-**Version:** 5.1.0 | **Language:** Rust | **Total LOC:** ~22,000 | **Files:** 63 .rs | **Tests:** 335
+**Version:** 5.2.0 | **Language:** Rust | **Total LOC:** ~22,000 | **Files:** 63 .rs | **Tests:** 335
 
 ---
 
@@ -124,7 +124,7 @@ crates/contribai-rs/src/
   - `cleanup` — Remove stale forks
   - `notify-test` — Real HTTP to Slack/Discord/Telegram
   - `system-status` — DB, rate limits, scheduler
-  - `interactive` — **ratatui TUI browser** (NEW in v5.1.0)
+  - `interactive` — **ratatui TUI browser** (NEW in v5.2.0)
   - `web-server` — Start web dashboard
   - `schedule` — Start cron scheduler
   - `mcp-server` — MCP stdio server
@@ -319,4 +319,4 @@ mod tests {
 
 - **Created:** 2026-03-28
 - **Last Updated:** 2026-04-01
-- **Version:** 5.1.0 (Interactive TUI, real notify-test, full CLI parity)
+- **Version:** 5.2.0 (Interactive TUI, real notify-test, full CLI parity)

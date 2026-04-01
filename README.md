@@ -5,7 +5,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.75+-orange.svg)](https://www.rust-lang.org/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-335%20passed-brightgreen)](#testing)
-[![Version](https://img.shields.io/badge/version-5.1.0-blue)](https://github.com/tang-vu/ContribAI/releases)
+[![Version](https://img.shields.io/badge/version-5.2.0-blue)](https://github.com/tang-vu/ContribAI/releases)
 
 ### 🏆 Results
 
@@ -18,7 +18,7 @@
 
 > Set it up once, wake up to merged PRs. See the [**Hall of Fame →**](HALL_OF_FAME.md)
 
-ContribAI discovers open source repos, analyzes code for improvements, generates fixes, and submits Pull Requests — all autonomously. **v5.1.0 is written in Rust** for ~10–50× faster analysis and a ~4.5 MB single binary.
+ContribAI discovers open source repos, analyzes code for improvements, generates fixes, and submits Pull Requests — all autonomously. **v5.2.0 is written in Rust** for ~10–50× faster analysis and a ~4.5 MB single binary.
 
 ```
   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
@@ -33,14 +33,17 @@ ContribAI discovers open source repos, analyzes code for improvements, generates
 ## Quick Start
 
 ```bash
-# Install (single binary, no runtime required)
-git clone https://github.com/tang-vu/ContribAI.git
-cd ContribAI
+# One-line install (auto-detects OS/arch)
+curl -fsSL https://raw.githubusercontent.com/tang-vu/ContribAI/main/install.sh | bash
+# Windows: irm https://raw.githubusercontent.com/tang-vu/ContribAI/main/install.ps1 | iex
+
+# Or build from source
+git clone https://github.com/tang-vu/ContribAI.git && cd ContribAI
 cargo install --path crates/contribai-rs
 
 # Configure
-cp config.yaml.template config.yaml
-# Edit config.yaml with your GitHub token + LLM API key
+contribai init                  # Interactive setup wizard
+contribai login                 # Verify auth + switch providers
 
 # Run
 contribai hunt              # Autonomous: discover repos → analyze → PR
@@ -85,7 +88,7 @@ contribai system-status               # DB, rate limits, scheduler
 contribai                             # Interactive menu (22 items)
 contribai interactive                 # ratatui TUI browser
 contribai init                        # Setup wizard
-contribai login                       # Auth status
+contribai login                       # Interactive auth + provider config
 
 # Config
 contribai config-list
@@ -124,7 +127,7 @@ See [`config.yaml.template`](config.yaml.template) for all options.
 
 ```
 ContribAI/
-├── crates/contribai-rs/src/   ← PRIMARY: Rust v5.1.0
+├── crates/contribai-rs/src/   ← PRIMARY: Rust v5.2.0
 │   ├── cli/                   # 22 commands + ratatui TUI
 │   ├── core/                  # Config, events, middleware
 │   ├── github/                # REST + GraphQL client

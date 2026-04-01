@@ -1,6 +1,6 @@
 # System Architecture
 
-**Version:** 5.1.0 | **Language:** Rust | **Last Updated:** 2026-04-01
+**Version:** 5.2.0 | **Language:** Rust | **Last Updated:** 2026-04-01
 
 ---
 
@@ -8,7 +8,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ContribAI Pipeline (v5.1.0 Rust)             │
+│                    ContribAI Pipeline (v5.2.0 Rust)             │
 └─────────────────────────────────────────────────────────────────┘
 
 Input: GitHub Repository (URL or discovery)
@@ -492,4 +492,4 @@ pub enum ContribAIError {
 
 - **Created:** 2026-03-28
 - **Last Updated:** 2026-04-01
-- **Version:** 5.1.0 (Interactive TUI + full CLI parity)
+- **Version:** 5.2.0 (Interactive TUI + full CLI parity)

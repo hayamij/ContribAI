@@ -1,12 +1,12 @@
 # Project Roadmap
 
-**Current Version:** 5.1.0 | **Release Date:** 2026-04-01 | **Status:** Active Development
+**Current Version:** 5.2.0 | **Release Date:** 2026-04-01 | **Status:** Active Development
 
 ---
 
 ## Executive Summary
 
-ContribAI is a mature autonomous AI contribution system. Originally built in Python (v0.x–v4.0), it was rewritten in Rust (v5.0.0) for performance, safety, and new capabilities like tree-sitter AST parsing and PageRank file ranking. v5.1.0 adds an interactive TUI, real notification delivery, and full 22-command CLI parity. The roadmap focuses on leveraging Rust's advantages for production maturity and ecosystem expansion.
+ContribAI is a mature autonomous AI contribution system. Originally built in Python (v0.x–v4.0), it was rewritten in Rust (v5.0.0) for performance, safety, and new capabilities like tree-sitter AST parsing and PageRank file ranking. v5.2.0 adds an interactive TUI, real notification delivery, and full 22-command CLI parity. The roadmap focuses on leveraging Rust's advantages for production maturity and ecosystem expansion.
 
 ---
 
@@ -82,6 +82,19 @@ ContribAI is a mature autonomous AI contribution system. Originally built in Pyt
 
 ---
 
+### v5.2.0 (2026-04-01) — Interactive Login, Rust CI, 4-platform Binaries ✓
+
+**Key Achievements (v5.2.0):**
+- ✓ Interactive `contribai login` — switch LLM providers, update tokens, launch wizard
+- ✓ One-line install scripts (`install.sh` + `install.ps1`) — auto-detect OS/arch
+- ✓ 4-platform release binaries: Linux x86_64, Windows x86_64, macOS Intel, macOS ARM64
+- ✓ Rust-first CI pipeline: fmt + clippy -D warnings + 335 tests + cargo audit
+- ✓ Python legacy tests only trigger with `[python]` commit label
+- ✓ Resolved 24+ clippy warnings, zero-warning strict lint
+- ✓ Cross-compilation support for macOS aarch64
+
+---
+
 ### v5.1.0 (2026-04-01) — Interactive TUI & Full CLI Parity ✓
 
 **Key Achievements (v5.1.0):**
@@ -96,7 +109,7 @@ ContribAI is a mature autonomous AI contribution system. Originally built in Pyt
 
 ---
 
-## Feature Status Matrix (v5.1.0)
+## Feature Status Matrix (v5.2.0)
 
 ### Core Pipeline
 
@@ -172,7 +185,7 @@ ContribAI is a mature autonomous AI contribution system. Originally built in Pyt
 - ✓ New Rust-only capabilities (tree-sitter, PageRank, triage, compression)
 - ✓ 62 files, ~21,400 LOC, 323 tests, single static binary
 
-### Milestone 5: Full CLI Parity + TUI (v5.1.0) ✓
+### Milestone 5: Full CLI Parity + TUI (v5.2.0) ✓
 - ✓ 22 CLI commands (was 21)
 - ✓ Interactive ratatui TUI browser
 - ✓ Real notification testing (Slack, Discord, Telegram)
@@ -272,5 +285,5 @@ ContribAI is a mature autonomous AI contribution system. Originally built in Pyt
 
 - **Created:** 2026-03-28
 - **Last Updated:** 2026-04-01
-- **Version:** 5.1.0 (TUI + full CLI parity)
+- **Version:** 5.2.0 (TUI + full CLI parity)
 - **Next Review:** 2026-06-30 (Q2 end)

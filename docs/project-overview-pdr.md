@@ -1,6 +1,6 @@
 # ContribAI — Project Overview & PDR
 
-**Version:** 5.1.0 | **License:** AGPL-3.0 + Commons Clause | **Status:** Active Development
+**Version:** 5.2.0 | **License:** AGPL-3.0 + Commons Clause | **Status:** Active Development
 
 ---
 
@@ -8,7 +8,7 @@
 
 **ContribAI** is an autonomous AI agent written in Rust that discovers open source repositories on GitHub, analyzes them for improvement opportunities, generates high-quality code fixes, and submits Pull Requests — all without human intervention. It bridges the gap between maintainer bandwidth constraints and contributor availability by delivering production-grade contributions at scale.
 
-**v5.1.0** is the full Rust rewrite: ~4.5 MB single binary, ~5ms startup, 22 CLI commands, interactive TUI, and real notification delivery.
+**v5.2.0** is the full Rust rewrite: ~4.5 MB single binary, ~5ms startup, 22 CLI commands, interactive TUI, and real notification delivery.
 
 ---
 
@@ -45,7 +45,7 @@ Autonomous, safe, high-quality code contributions that:
 - Duplicate PR prevention via title similarity
 - Post-PR CI monitoring with auto-close on failures
 
-#### Interactive TUI (v5.1.0 NEW)
+#### Interactive TUI (v5.2.0 NEW)
 - **ratatui** 4-tab terminal browser: Dashboard / PRs / Repos / Actions
 - Browse PR history, per-repo merge rates, run commands
 - Keyboard navigation: Tab/1-4 switch tabs · j/k scroll · ? help · q quit
@@ -179,7 +179,7 @@ Autonomous, safe, high-quality code contributions that:
 | FR-PR.7 | Monitor reviews | Track maintainer feedback, auto-fix |
 | FR-PR.8 | Duplicate prevention | Title similarity matching (>90% = duplicate) |
 
-### Interactive CLI (FR-I) — v5.1.0
+### Interactive CLI (FR-I) — v5.2.0
 
 | ID | Requirement | Implementation |
 |----|-------------|---------------|
@@ -291,7 +291,7 @@ Autonomous, safe, high-quality code contributions that:
 ### Recent Releases
 
 - **v5.0.0** (2026-03-31) — Full Rust rewrite, 21 CLI commands, 323 tests
-- **v5.1.0** (2026-04-01) — Interactive TUI, real notifications, 22 commands, 335 tests
+- **v5.2.0** (2026-04-01) — Interactive TUI, real notifications, 22 commands, 335 tests
 - **v4.1.0** (2026-03-28) — Python legacy: Antigravity MCP, clean PR titles _(archived)_
 
 ### Planned (v5.2.0+)
@@ -344,5 +344,5 @@ Autonomous, safe, high-quality code contributions that:
 
 - **Created:** 2026-03-28
 - **Last Updated:** 2026-04-01
-- **Version:** 5.1.0 (Rust — Interactive TUI + full CLI parity)
+- **Version:** 5.2.0 (Rust — Interactive TUI + full CLI parity)
 - **Related:** README.md, AGENTS.md, docs/ARCHITECTURE.md, docs/system-architecture.md

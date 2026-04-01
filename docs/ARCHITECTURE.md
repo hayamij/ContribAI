@@ -1,6 +1,6 @@
 # Architecture
 
-ContribAI v5.1.0 — Rust-native autonomous contribution agent.
+ContribAI v5.2.0 — Rust-native autonomous contribution agent.
 
 ## System Overview
 

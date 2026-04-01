@@ -1,12 +1,22 @@
 # Deployment Guide
 
-**Version:** 5.1.0 | **Language:** Rust | **Last Updated:** 2026-04-01
+**Version:** 5.2.0 | **Language:** Rust | **Last Updated:** 2026-04-01
 
 ---
 
 ## Quick Start
 
-### Option 1: Build from Source (Development)
+### Option 1: One-Line Install (Recommended)
+
+```bash
+# Linux / macOS (auto-detects OS and architecture)
+curl -fsSL https://raw.githubusercontent.com/tang-vu/ContribAI/main/install.sh | bash
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/tang-vu/ContribAI/main/install.ps1 | iex
+```
+
+### Option 2: Build from Source (Development)
 
 ```bash
 # Clone repository
@@ -20,8 +30,8 @@ cargo build --release
 cargo install --path crates/contribai-rs
 
 # Configure
-cp config.yaml.template config.yaml
-# Edit config.yaml with your API keys
+contribai init            # Interactive setup wizard
+contribai login           # Verify auth + switch LLM providers
 
 # Run
 contribai hunt
@@ -49,7 +59,7 @@ docker compose up -d dashboard scheduler
 ```bash
 # Install to PATH (recommended)
 cargo install --path crates/contribai-rs
-contribai --version  # 5.1.0
+contribai --version  # 5.2.0
 contribai --help
 
 # Or run directly from build output:
@@ -483,4 +493,4 @@ sqlite3 ~/.contribai/memory.db "PRAGMA integrity_check;"
 
 - **Created:** 2026-03-28
 - **Last Updated:** 2026-04-01
-- **Version:** 5.1.0 (Interactive TUI + full CLI parity)
+- **Version:** 5.2.0 (Interactive TUI + full CLI parity)

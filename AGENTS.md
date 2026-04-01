@@ -11,7 +11,7 @@ It discovers repos, analyzes code, generates fixes, and submits pull requests �
 **It is NOT** a library/SDK, web app, or CLI tool intended for end-user consumption.
 It is itself an AI agent that operates on other GitHub repositories.
 
-> **v5.1.0 — Primary implementation is Rust** (`crates/contribai-rs/`).
+> **v5.2.0 — Primary implementation is Rust** (`crates/contribai-rs/`).
 > Python code is in `python/` (legacy v4.1.0, kept for reference).
 
 ## Tech Stack
@@ -34,7 +34,7 @@ It is itself an AI agent that operates on other GitHub repositories.
 
 ```
 ContribAI/
-├── crates/contribai-rs/        ← PRIMARY: Rust v5.1.0
+├── crates/contribai-rs/        ← PRIMARY: Rust v5.2.0
 │   ├── src/
 │   │   ├── main.rs             entry point
 │   │   ├── lib.rs              library root
@@ -72,7 +72,7 @@ ContribAI/
 │   │   ├── web/mod.rs          axum dashboard API
 │   │   ├── sandbox/sandbox.rs  Docker + ast fallback
 │   │   └── tools/protocol.rs  tool interface
-│   ├── Cargo.toml              v5.1.0
+│   ├── Cargo.toml              v5.2.0
 │   └── tests/                 335 Rust tests
 │
 ├── python/                     LEGACY Python v4.1.0
@@ -84,7 +84,7 @@ ContribAI/
 └── config.yaml.template        shared config template
 ```
 
-## Architecture (v5.1.0)
+## Architecture (v5.2.0)
 
 ### Core Pipeline
 ```
@@ -196,7 +196,7 @@ async fn run_my_command(arg: &str, config_path: Option<&str>) -> anyhow::Result<
 | `schedule` | `run_schedule()` | Cron scheduler |
 | `mcp-server` | `run_mcp_server()` | MCP stdio server |
 | `init` | `wizard::run_wizard()` | Setup wizard |
-| `login` | `run_login_check()` | Auth status |
+| `login` | `run_login_check()` | Interactive auth & provider config |
 | `config-get/set/list` | `config_editor::*` | YAML config editor |
 
 ## Testing
