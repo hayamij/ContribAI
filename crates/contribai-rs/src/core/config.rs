@@ -475,13 +475,18 @@ impl Default for StorageConfig {
 }
 
 impl StorageConfig {
-    /// Resolve the database path, creating parent directories if needed.
+    /// Resolve the database path, expanding `~` and creating parent directories.
     pub fn resolved_db_path(&self) -> PathBuf {
-        let path = PathBuf::from(&self.db_path);
-        if let Some(parent) = path.parent() {
+        let expanded = if self.db_path.starts_with("~/") || self.db_path == "~" {
+            let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+            home.join(&self.db_path[2..])
+        } else {
+            PathBuf::from(&self.db_path)
+        };
+        if let Some(parent) = expanded.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        path
+        expanded
     }
 }
 
